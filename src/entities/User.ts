@@ -1,10 +1,12 @@
 import { Model, model, Schema } from "mongoose";
 import bcrypt from 'bcrypt';
 
-interface IUser {
+interface IUser extends Document {
     userName: string;
     email: string;
     password: string;
+    isEmailVerified: boolean;
+    emailVerificationToken?: string;
     createdAt: Date;
 }
 
@@ -20,11 +22,19 @@ const userSchema = new Schema<IUser>({
     email: {
         type: String,
         required: true,
-        unique: true // Needs validation
+        unique: true
     },
     password: {
         type: String,
         required: true,
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: {
+        type: String,
+        default: null
     },
     createdAt: {
         type: Date,
