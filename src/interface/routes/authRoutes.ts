@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 import { body } from 'express-validator';
 import express from 'express';
-import { postLogin, postSignup, verifyEmail } from '../controllers/authController';
+import { logout, postLogin, postSignup, verifyEmail } from '../controllers/authController';
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Create an instance of an Express router
@@ -47,6 +47,11 @@ authRouter.post('/signup', [
         .notEmpty().withMessage('Your password cannot be empty')
         .isLength({ min: 6, max: 100 }).withMessage('Password must be at least 6 characters long, and a maximum of 100 characters')
 ], postSignup); // Pass the request to the postSignup controller after validation
+
+///////////////////////////////////////////////////////////////////////////////////
+// POST /logout
+///////////////////////////////////////////////////////////////////////////////////
+authRouter.post('/logout', logout);
 
 ///////////////////////////////////////////////////////////////////////////////////
 // GET /verify-email

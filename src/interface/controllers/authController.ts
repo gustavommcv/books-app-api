@@ -2,13 +2,17 @@ import { Request, Response } from 'express';
 import { matchedData, validationResult } from "express-validator";
 import nodemailer from 'nodemailer';
 import 'dotenv/config'; // Filling process.env with .env values
-import crypto from 'crypto'; // To generate a validation token
+import crypto from 'crypto'; // To generate an e-mail validation token
+import jwt from 'jsonwebtoken';
 
 import User from '../../entities/User';
 
 const PORT = process.env.PORT || 3000;
 const API_EMAIL = process.env.API_EMAIL;
 const API_EMAIL_PASSWORD = process.env.API_EMAIL_PASSWORD
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_EXPIRES_IN = '1d'; // Token is valid for 1 day
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -34,6 +38,27 @@ const sendVerificationEmail = async (email:string, token:string) => {
 
 // Define the postLogin controller function
 export const postLogin = async (request: Request, response: Response): Promise<void> => {
+    // Verifies if there is a JWT valid on cookie
+    const existingToken = request.cookies.authToken;
+
+    if (existingToken) {
+        try {
+            // Try to validate the token
+            const decoded = jwt.verify(existingToken, JWT_SECRET);
+            
+            // if the token is valid, sends the response
+            response.status(200).json({
+                message: 'You are already logged in',
+                user: decoded
+            });
+            return;
+        } catch (error) {
+            // If the token is expired or invalid, continues with the normal login process
+            console.warn('Invalid or expired token, processing login again.');
+            response.clearCookie('authToken'); // Clears the cookie
+        }
+    }
+
     // Validate the request and check for errors using express-validator
     const errorsResult = validationResult(request);
 
@@ -55,10 +80,27 @@ export const postLogin = async (request: Request, response: Response): Promise<v
             return;
         }
 
-        const userName = user.userName;
+        // Generates the JWT token
+        const token = jwt.sign(
+            {
+                id: user._id, 
+                email: user.email
+            },
+            JWT_SECRET,
+            {
+                expiresIn: JWT_EXPIRES_IN
+            }
+        );
+
+        response.cookie('authToken', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 1 * 24 * 60 * 60 * 1000 // 1 day
+        });
 
         // If successful, return a 200 status with a success message and the user data
-        response.status(200).json({ message: 'Login Successful', userName });
+        response.status(200).json({ message: 'Login Successful', token, user: { userName: user.userName, email: user.email } });
     } catch (error) {
         console.error(error);
         // If an error occurs, handle it appropriately
@@ -78,6 +120,24 @@ export const postLogin = async (request: Request, response: Response): Promise<v
 
 // Define the postSignup controller function
 export const postSignup = async (request: Request, response: Response): Promise<void> => {
+    const existingToken = request.cookies.authToken;
+    
+    // Verifies if the user is logged in
+    if (existingToken) {
+        try {
+            // If it is an valid token, stops the sign in process
+            jwt.verify(existingToken, JWT_SECRET);
+            response.status(400).json({
+                message: 'You are already logged in. Logout first to create a new account.'
+            });
+            return 
+        } catch (error) {
+            // If it is an invalid token, continues with the process of sign up
+            console.warn('Invalid or expired token during signup check.');
+            response.clearCookie('authToken'); // Clears the cookie
+        }
+    }
+
     // Validate the request and check for errors using express-validator
     const errorsResult = validationResult(request);
 
@@ -110,7 +170,7 @@ export const postSignup = async (request: Request, response: Response): Promise<
         });
 
         // Save the new user to the database
-        newUser.save();
+        await newUser.save();
 
         // Sends the verification email
         await sendVerificationEmail(email, verificationToken);
@@ -122,6 +182,19 @@ export const postSignup = async (request: Request, response: Response): Promise<
         // If an error occurs, return a 500 status with a generic error message
         response.status(500).json({ message: 'Internal server error' });
     }
+}
+
+export const logout = (request: Request, response: Response) => {
+    const token = request.cookies.authToken;
+
+    if (!token) {
+        response.status(400).json({ message: 'You are already logged out' });
+        return;
+    }
+
+    response.clearCookie('authToken');
+
+    response.status(200).json({ message: 'Logout sucessful' });
 }
 
 // Define the verifyEmail controller function
