@@ -112,8 +112,9 @@ export const postLogin = async (request: Request, response: Response): Promise<v
         // Generates the JWT token
         const token = jwt.sign(
             {
-                id: user._id, 
-                email: user.email
+                id: user._id,
+                userName: user.userName,
+                role: user.role
             },
             JWT_SECRET,
             {

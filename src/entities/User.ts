@@ -6,6 +6,7 @@ interface IUser extends Document {
     userName: string;
     email: string;
     password: string;
+    role: 'admin' | 'user';
     isEmailVerified: boolean;
     emailVerificationToken?: string;
     createdAt: Date;
@@ -28,6 +29,11 @@ const userSchema = new Schema<IUser>({
     password: {
         type: String,
         required: true,
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
     },
     isEmailVerified: {
         type: Boolean,
