@@ -151,18 +151,16 @@ export const postLogin = async (request: Request, response: Response): Promise<v
 // Define the postSignup controller function
 export const postSignup = async (request: Request, response: Response): Promise<void> => {
     const existingToken = request.cookies.authToken;
-    
+
     // Verifies if the user is logged in
     if (existingToken) {
         try {
-            // If it is an valid token, stops the sign in process
             jwt.verify(existingToken, JWT_SECRET);
             response.status(400).json({
                 message: 'You are already logged in. Logout first to create a new account.'
             });
-            return 
+            return;
         } catch (error) {
-            // If it is an invalid token, continues with the process of sign up
             console.warn('Invalid or expired token during signup check.');
             response.clearCookie('authToken'); // Clears the cookie
         }
@@ -170,15 +168,13 @@ export const postSignup = async (request: Request, response: Response): Promise<
 
     // Validate the request and check for errors using express-validator
     const errorsResult = validationResult(request);
-
-    // If there are validation errors, return a 400 status with the errors
     if (!errorsResult.isEmpty()) {
         response.status(400).json({ errors: errorsResult.array() });
         return;
-    };
+    }
 
-    // Extract validated data from the request using matchedData
-    const { userName, email, password } = matchedData(request);
+    // Extract validated data, including the role
+    const { userName, email, password, role } = matchedData(request);
 
     try {
         const existingUser = await User.findOne({ email });
@@ -190,29 +186,27 @@ export const postSignup = async (request: Request, response: Response): Promise<
         // Generates a new verification token
         const verificationToken = crypto.randomBytes(20).toString('hex');
 
-        // Create a new user instance with the validated data
-        const newUser = new User({ 
-            userName, 
-            email, 
+        // Create a new user instance with the provided role
+        const newUser = new User({
+            userName,
+            email,
             password,
+            role,
             isEmailVerified: false,
             emailVerificationToken: verificationToken
         });
 
-        // Save the new user to the database
         await newUser.save();
 
         // Sends the verification email
         try {
             await sendVerificationEmail(email, verificationToken);
-            // If successful, return a 200 status with a success message and the new user data
             response.status(200).json({
                 message: 'You’ve successfully signed up! Please check your email to verify your account. Don’t forget to check your spam folder if it’s not in your inbox.',
                 userName
             });
         } catch (error) {
             console.error('Error sending verification email:', error);
-
             await User.findByIdAndDelete(newUser._id);
             response.status(500).json({
                 message: 'Failed to send verification email. Please try again later.'
@@ -220,10 +214,10 @@ export const postSignup = async (request: Request, response: Response): Promise<
         }
     } catch (error) {
         console.error(error);
-        // If an error occurs, return a 500 status with a generic error message
         response.status(500).json({ message: 'Internal server error' });
     }
-}
+};
+
 
 export const logout = (request: Request, response: Response) => {
     const token = request.cookies.authToken;

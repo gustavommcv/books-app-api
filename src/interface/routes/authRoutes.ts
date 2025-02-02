@@ -45,7 +45,12 @@ authRouter.post('/signup', [
     body('password')
         .exists().withMessage('You need to provide an password')
         .notEmpty().withMessage('Your password cannot be empty')
-        .isLength({ min: 6, max: 100 }).withMessage('Password must be at least 6 characters long, and a maximum of 100 characters')
+        .isLength({ min: 6, max: 100 }).withMessage('Password must be at least 6 characters long, and a maximum of 100 characters'),
+    
+    // Validate roles
+    body('role')
+        .exists().withMessage('You need to provide a role')
+        .isIn(['admin', 'user']).withMessage('Role must be either "admin" or "user"')
 ], postSignup); // Pass the request to the postSignup controller after validation
 
 ///////////////////////////////////////////////////////////////////////////////////

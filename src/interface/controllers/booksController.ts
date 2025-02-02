@@ -53,6 +53,6 @@ export const getBook = async (request: Request, response: Response) => {
         response.status(500).json({
             message: "Internal server error while fetching books",
             error: error instanceof Error ? error.message : "Unknown error"
-        })
+        });
     }
 }
