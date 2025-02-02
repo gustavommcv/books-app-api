@@ -19,22 +19,51 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: API_EMAIL,
         pass: API_EMAIL_PASSWORD
+    },
+    // logger: true,
+    // debug: true
+});
+
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('Error connecting to SMTP server:', error);
+    } else {
+        console.log('SMTP server is ready to take messages');
     }
 });
 
-const sendVerificationEmail = async (email:string, token:string) => {
+const sendVerificationEmail = async (email: string, token: string) => {
     const verificationLink = `https://localhost:${PORT}/api/auth/verify-email?token=${token}`;
 
     const mailOptions = {
         from: API_EMAIL,
         to: email,
-        subject: 'Email confirmation',
-        html: `<p>Hello, please verify your e-mail adress clicking on the link bellow:</p>
-                <a href="${verificationLink}">Verify E-mail</a>`
-    }
+        subject: 'Verify Your Email - BooksApp',
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
+                <h2 style="color: #4CAF50;">Welcome to BooksApp!</h2>
+                <p>Hello,</p>
+                <p>Thank you for signing up with <strong>BooksApp</strong>. Please verify your email address by clicking the button below:</p>
+                
+                <div style="text-align: center; margin: 20px;">
+                    <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">Verify My Email</a>
+                </div>
 
-    await transporter.sendMail(mailOptions);
-}
+                <p>If you did not create this account, please ignore this email.</p>
+                <p>Thank you,</p>
+                <p>The <strong>BooksApp</strong> Team</p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Verification email sent successfully to:', email);
+    } catch (error) {
+        console.error('Failed to send email:', error);
+        throw new Error('Failed to send verification email'); 
+    }
+};
 
 // Define the postLogin controller function
 export const postLogin = async (request: Request, response: Response): Promise<void> => {
@@ -173,10 +202,21 @@ export const postSignup = async (request: Request, response: Response): Promise<
         await newUser.save();
 
         // Sends the verification email
-        await sendVerificationEmail(email, verificationToken);
+        try {
+            await sendVerificationEmail(email, verificationToken);
+            // If successful, return a 200 status with a success message and the new user data
+            response.status(200).json({
+                message: 'You’ve successfully signed up! Please check your email to verify your account. Don’t forget to check your spam folder if it’s not in your inbox.',
+                userName
+            });
+        } catch (error) {
+            console.error('Error sending verification email:', error);
 
-        // If successful, return a 200 status with a success message and the new user data
-        response.status(200).json({ message: 'Signup Successful. Please check your email for verification.', userName });
+            await User.findByIdAndDelete(newUser._id);
+            response.status(500).json({
+                message: 'Failed to send verification email. Please try again later.'
+            });
+        }
     } catch (error) {
         console.error(error);
         // If an error occurs, return a 500 status with a generic error message
