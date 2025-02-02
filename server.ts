@@ -1,7 +1,7 @@
 import 'dotenv/config'; // Filling process.env with .env values
 import https from 'https'; // Native module for creating HTTPS servers or making HTTPS requests 
 import fs from 'fs'; // Native module for interacting with the file system
-import app from './app'; // Main application setup (Express server configuration)
+import app from './src/app'; // Main application setup (Express server configuration)
 
 ///////////////////////////////////////////////////////////////////////////////////
 //// Define the port from environment variables or use a default value

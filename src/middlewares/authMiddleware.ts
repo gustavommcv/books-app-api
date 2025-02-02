@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
+// TODO - Authorization for admin users
 export const authMiddleware = (request: Request, response: Response, next: NextFunction) => {
     const token = request.cookies.authToken;
 
