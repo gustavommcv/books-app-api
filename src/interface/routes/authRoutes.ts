@@ -10,6 +10,50 @@ import { logout, postLogin, postSignup, verifyEmail } from '../controllers/authC
 const authRouter = express.Router();
 
 ///////////////////////////////////////////////////////////////////////////////////
+// GET /auth - Lists all available endpoints
+///////////////////////////////////////////////////////////////////////////////////
+authRouter.get('/', async (request, response) => {
+    response.status(200).json({
+        message: "Endpoints for /auth:",
+        endpoints: {
+            login: {
+                method: "POST",
+                description: "Authenticate a user and return a JWT token",
+                path: "/auth/login",
+                bodyParams: {
+                    email: "User's email address",
+                    password: "User's password"
+                }
+            },
+            signup: {
+                method: "POST",
+                description: "Register a new user",
+                path: "/auth/signup",
+                bodyParams: {
+                    userName: "User's name",
+                    email: "User's email address",
+                    password: "User's password",
+                    role: "Role of the user (admin or user)"
+                }
+            },
+            logout: {
+                method: "POST",
+                description: "Logout the user by clearing the JWT token",
+                path: "/auth/logout"
+            },
+            verifyEmail: {
+                method: "GET",
+                description: "Verify a user's email address using a token",
+                path: "/auth/verify-email",
+                queryParams: {
+                    token: "Verification token sent via email"
+                }
+            }
+        }
+    });
+});
+
+///////////////////////////////////////////////////////////////////////////////////
 // POST /login route with validation middleware
 ///////////////////////////////////////////////////////////////////////////////////
 authRouter.post('/login', [

@@ -1,22 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+
+interface CustomJwtPayload extends JwtPayload {
+    id: string;
+    email: string;
+    role: string;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-// TODO - Authorization for admin users
+// Middleware for authenticating the user
 export const authMiddleware = (request: Request, response: Response, next: NextFunction) => {
     const token = request.cookies.authToken;
 
     if (!token) {
-        return response.status(401).json({ message: 'Authentication required' });
+        response.status(401).json({ message: 'Authentication required' });
+        return
     }
-    
+
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        request.user = decoded; // Decoded user stored on the Request
-        next(); // Allows that the next function continues
+        const decoded = jwt.verify(token, JWT_SECRET) as CustomJwtPayload;
+
+        // Attach user to the request object
+        request.user = {
+            id: decoded.id,
+            email: decoded.email,
+            role: decoded.role
+        };
+
+        next();
     } catch (error) {
-        response.clearCookie('authToken'); // Clears the cookie
-        return response.status(403).json({ message: 'Invalid or expired token' });
+        response.clearCookie('authToken');
+        response.status(403).json({ message: 'Invalid or expired token' });
+        return;
     }
-}
+};

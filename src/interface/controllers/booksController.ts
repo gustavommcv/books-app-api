@@ -56,3 +56,36 @@ export const getBook = async (request: Request, response: Response) => {
         });
     }
 }
+
+export const postBook = async (request: Request, response: Response) => {
+    try {
+        // Create a new book instance using the request body
+        const { title, author, description, genre, publicationDate, pageCount, cover } = request.body;
+
+        const newBook = new Book({
+            title,
+            author,
+            description,
+            genre,
+            publicationDate: new Date(publicationDate),
+            pageCount,
+            cover
+        });
+
+        // Save the book to the database
+        const savedBook = await newBook.save();
+
+        // Respond with the created book details
+        response.status(201).json({
+            message: "Book created successfully",
+            book: savedBook
+        });
+
+    } catch (error) {
+        console.error("Error creating book:", error);
+        response.status(500).json({
+            message: "Internal server error while creating the book",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
+    }
+}
