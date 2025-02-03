@@ -10,6 +10,9 @@ interface IUser extends Document {
     isEmailVerified: boolean;
     emailVerificationToken?: string;
     createdAt: Date;
+
+    reviews?: Types.ObjectId[];
+    comments?: Types.ObjectId[];
 }
 
 interface IUserModel extends Model<IUser> {
@@ -47,6 +50,17 @@ const userSchema = new Schema<IUser>({
         type: Date,
         default: Date.now,
     },
+
+    reviews: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Review'
+    }],
+    comments: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Comment'
+        }
+    ]
 });
 
 userSchema.pre('save', async function(next) {
