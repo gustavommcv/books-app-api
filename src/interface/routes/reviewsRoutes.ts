@@ -43,12 +43,15 @@ reviewsRoutes.post(
     authMiddleware,
     [
         body('bookId').isMongoId().withMessage('A valid bookId is required'),
+        body('title')
+            .isLength({ min: 3, max: 100 })
+            .withMessage('Title must be between 3 and 100 characters'),
         body('rating')
             .isInt({ min: 1, max: 5 })
             .withMessage('Rating must be an integer between 1 and 5'),
         body('content')
             .isLength({ min: 10, max: 2000 })
-            .withMessage('Review content must be between 10 and 2000 characters'),
+            .withMessage('Review content must be between 10 and 2000 characters')
     ],
     validateRequest,
     postReview
@@ -58,7 +61,21 @@ reviewsRoutes.post(
 reviewsRoutes.put(
     '/:reviewId',
     authMiddleware,
-    param('reviewId').isMongoId().withMessage('Invalid review ID format'),
+    [
+        param('reviewId').isMongoId().withMessage('Invalid review ID format'),
+        body('title')
+            .optional()
+            .isLength({ min: 3, max: 100 })
+            .withMessage('Title must be between 3 and 100 characters'),
+        body('rating')
+            .optional()
+            .isInt({ min: 1, max: 5 })
+            .withMessage('Rating must be an integer between 1 and 5'),
+        body('content')
+            .optional()
+            .isLength({ min: 10, max: 2000 })
+            .withMessage('Content must be between 10 and 2000 characters')
+    ],
     validateRequest,
     putReview
 );

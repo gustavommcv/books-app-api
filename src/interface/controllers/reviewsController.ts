@@ -78,8 +78,8 @@ export const getReview = async (request: Request, response: Response) => {
 
 export const postReview = async (request: Request, response: Response) => {
     try {
-        const { bookId, rating, content } = request.body;
-        const userId = request.user?.id; // Authenticated user Id
+        const { bookId, title, rating, content } = request.body;
+        const userId = request.user?.id;
 
         if (!Types.ObjectId.isValid(bookId)) {
             response.status(400).json({ message: 'Invalid book ID' });
@@ -91,27 +91,25 @@ export const postReview = async (request: Request, response: Response) => {
             return;
         }
 
-        // Convertendo userId para ObjectId
-        const userObjectId = new Types.ObjectId(userId);
+        const existingReview = await ReviewService.getReviewByUserAndBook(
+            new Types.ObjectId(userId),
+            new Types.ObjectId(bookId)
+        );
 
-        const existingReview = await ReviewService.getReviewByUserAndBook(userObjectId, new Types.ObjectId(bookId));
         if (existingReview) {
             response.status(400).json({ message: 'You have already reviewed this book' });
             return;
         }
 
-        // Cria a review usando o service
         const newReview = await ReviewService.createReview({
             bookId: new Types.ObjectId(bookId),
-            userId: userObjectId,
+            userId: new Types.ObjectId(userId),
+            title,
             rating,
             content
         });
 
-        response.status(201).json({
-            message: 'Review created successfully',
-            review: newReview
-        });
+        response.status(201).json({ message: 'Review created successfully', review: newReview });
     } catch (error) {
         console.error('Error creating review:', error);
         response.status(500).json({
@@ -124,7 +122,7 @@ export const postReview = async (request: Request, response: Response) => {
 export const putReview = async (request: Request, response: Response) => {
     try {
         const { reviewId } = request.params;
-        const { rating, content } = request.body;
+        const { title, rating, content } = request.body;
         const userId = request.user?.id;
 
         if (!Types.ObjectId.isValid(reviewId) || !userId) {
@@ -135,7 +133,7 @@ export const putReview = async (request: Request, response: Response) => {
         const updatedReview = await ReviewService.updateReview(
             new Types.ObjectId(reviewId),
             new Types.ObjectId(userId),
-            { rating, content }
+            { title, rating, content }
         );
 
         if (!updatedReview) {
@@ -143,10 +141,7 @@ export const putReview = async (request: Request, response: Response) => {
             return;
         }
 
-        response.status(200).json({
-            message: 'Review updated successfully',
-            review: updatedReview
-        });
+        response.status(200).json({ message: 'Review updated successfully', review: updatedReview });
     } catch (error) {
         console.error('Error updating review:', error);
         response.status(500).json({

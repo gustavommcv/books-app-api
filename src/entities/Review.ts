@@ -4,6 +4,7 @@ import { commentSchema, IComment } from "./Comment";
 interface IReview extends Document {
     bookId: Types.ObjectId;
     userId: Types.ObjectId;
+    title: string;
     rating: number;
     content: string;
     createdAt: Date;
@@ -22,6 +23,11 @@ const reviewSchema = new Schema<IReview>({
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    title: {
+        type: String,
+        required: true,
+        maxlength: 100
     },
     rating: {
         type: Number,
