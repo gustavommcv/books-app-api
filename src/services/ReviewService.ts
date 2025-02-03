@@ -30,29 +30,38 @@ export default class ReviewService {
         await Book.findByIdAndUpdate(bookId, { $push: { reviews: savedReview._id } });
         await User.findByIdAndUpdate(userId, { $push: { reviews: savedReview._id } });
 
+        await this.calculateAndUpdateBookRating(bookId);
+
         return savedReview;
     }
 
     static async updateReview(reviewId: Types.ObjectId, userId: Types.ObjectId, updateData: { title?: string; rating?: number; content?: string }) {
-        return await Review.findOneAndUpdate(
+        const review = await Review.findOneAndUpdate(
             { _id: reviewId, userId },
             { ...updateData, updatedAt: new Date() },
             { new: true, runValidators: true }
         );
+    
+        if (review) {
+            await this.calculateAndUpdateBookRating(review.bookId);
+        }
+    
+        return review;
     }
 
     static async deleteReview(reviewId: Types.ObjectId, userId: Types.ObjectId) {
         const review = await Review.findOneAndDelete({ _id: reviewId, userId });
-
+    
         if (review) {
-            // Remover referência da review do livro e do usuário
+            // Remover referência
             await Book.findByIdAndUpdate(review.bookId, { $pull: { reviews: reviewId } });
             await User.findByIdAndUpdate(review.userId, { $pull: { reviews: reviewId } });
-
-            // Deletar todos os comentários associados à review
+    
             await Comment.deleteMany({ reviewId: review._id });
+    
+            await this.calculateAndUpdateBookRating(review.bookId);
         }
-
+    
         return review;
     }
     
@@ -62,5 +71,20 @@ export default class ReviewService {
 
     static async getReviewsByUser(userId: Types.ObjectId) {
         return await Review.find({ userId }).populate("bookId", "title");
+    }
+
+    static async calculateAndUpdateBookRating(bookId: Types.ObjectId) {
+        // Fetch all reviews of the book
+        const reviews = await Review.find({ bookId });
+
+        if (reviews.length === 0) {
+            await Book.findByIdAndUpdate(bookId, { averageRating: 0 });
+            return;
+        }
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const averageRating = totalRating / reviews.length;
+
+        await Book.findByIdAndUpdate(bookId, { averageRating: averageRating.toFixed(1) });
     }
 }

@@ -10,6 +10,7 @@ interface IBook extends Document {
     publicationDate: Date;
     pageCount: number;
     cover: string;
+    averageRating: number;
 
     reviews?: Types.ObjectId[];
 }
@@ -44,7 +45,10 @@ const bookSchema = new Schema<IBook>({
         type: String,
         required: true // Cover image URL is required
     },
-
+    averageRating: {
+        type: Number,
+        default: 0
+    },
     reviews: [{
         type: Schema.Types.ObjectId,
         ref: 'Review'
