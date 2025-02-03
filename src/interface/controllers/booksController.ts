@@ -89,3 +89,59 @@ export const postBook = async (request: Request, response: Response) => {
         });
     }
 }
+
+// PUT: Update a book by ID
+export const putBook = async (request: Request, response: Response) => {
+    try {
+        const { bookId } = request.params;
+        const updateData = request.body;
+
+        // Find the book and update with new data
+        const updatedBook = await Book.findByIdAndUpdate(bookId, updateData, {
+            new: true, // Return the updated book
+            runValidators: true // Ensure validation rules are applied
+        });
+
+        if (!updatedBook) {
+            response.status(404).json({ message: 'Book not found' });
+            return;
+        }
+
+        response.status(200).json({
+            message: 'Book updated successfully',
+            book: updatedBook
+        });
+    } catch (error) {
+        console.error('Error updating book:', error);
+        response.status(500).json({
+            message: 'Internal server error while updating book',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}
+
+// DELETE: Remove a book by ID
+export const deleteBook = async (request: Request, response: Response) => {
+    try {
+        const { bookId } = request.params;
+
+        // Find and delete the book
+        const deletedBook = await Book.findByIdAndDelete(bookId);
+
+        if (!deletedBook) {
+            response.status(404).json({ message: 'Book not found' });
+            return;
+        }
+
+        response.status(200).json({
+            message: 'Book deleted successfully',
+            book: deletedBook
+        });
+    } catch (error) {
+        console.error('Error deleting book:', error);
+        response.status(500).json({
+            message: 'Internal server error while deleting book',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}
