@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import Review from "../entities/Review";
 import Book from "../entities/Book";
 import User from "../entities/User";
+import Comment from "../entities/Comment";
 
 export default class ReviewService {
     static async getReviewById(reviewId: Types.ObjectId) {
@@ -44,13 +45,17 @@ export default class ReviewService {
         const review = await Review.findOneAndDelete({ _id: reviewId, userId });
 
         if (review) {
+            // Remover referência da review do livro e do usuário
             await Book.findByIdAndUpdate(review.bookId, { $pull: { reviews: reviewId } });
             await User.findByIdAndUpdate(review.userId, { $pull: { reviews: reviewId } });
+
+            // Deletar todos os comentários associados à review
+            await Comment.deleteMany({ reviewId: review._id });
         }
 
         return review;
     }
-
+    
     static async getReviewsByBook(bookId: Types.ObjectId) {
         return await Review.find({ bookId }).populate("userId", "userName");
     }
