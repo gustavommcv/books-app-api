@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Book from "../../entities/Book";
+import Review from "../../entities/Review";
+import { Types } from "mongoose";
 
 export const getBooks = async (request: Request, response: Response) => {
     try {
@@ -79,13 +81,14 @@ export const getBook = async (request: Request, response: Response) => {
         if (!book) {
             response.status(404).json({
                 message: "Book not found"
-            })
+            });
+            return;
         }
 
         response.status(200).json({
             message: "Book retrieved successfully",
             book
-        })
+        });
     } catch (error) {
         console.error(console.error("Error fetching book:", error));
         response.status(500).json({
@@ -94,6 +97,66 @@ export const getBook = async (request: Request, response: Response) => {
         });
     }
 }
+
+export const getRecommendations = async (request: Request, response: Response) => {
+    try {
+        const userId = request.user?.id;
+        if (!userId || !Types.ObjectId.isValid(userId)) {
+            response.status(400).json({ message: "Invalid user ID" });
+            return;
+        }
+
+        // Step 1: Get reviews with ratings >= 4 by this user
+        const positiveReviews = await Review.find({ userId, rating: { $gte: 4 } }).populate("bookId");
+
+        // Step 2: Extract genres from the books reviewed positively
+        const genreMap: { [key: string]: number } = {}; // Mapeamento de gêneros com frequência
+        for (const review of positiveReviews) {
+            const book = review.bookId as any; // Type assertion for Book schema
+            if (book?.genre) {
+                book.genre.forEach((g: string) => {
+                    genreMap[g] = (genreMap[g] || 0) + 1; // Incrementa o contador de cada gênero
+                });
+            }
+        }
+
+        const genres = Object.keys(genreMap);
+        if (genres.length === 0) {
+            response.status(200).json({
+                message: "No recommendations available. Try reviewing some books first.",
+                books: [],
+            });
+            return;
+        }
+
+        // Step 3: Fetch recommendations diversifying across genres
+        let recommendedBooks: any[] = [];
+        const booksPerGenre = Math.ceil(10 / genres.length);
+
+        for (const genre of genres) {
+            const books = await Book.find({
+                genre: genre,
+                _id: { $nin: positiveReviews.map((review) => review.bookId) }, // Exclude books the user has reviewed
+            })
+                .limit(booksPerGenre)
+                .exec();
+            recommendedBooks = recommendedBooks.concat(books);
+        }
+
+        // Step 4: Shuffle the recommendations for randomness
+        recommendedBooks = recommendedBooks.sort(() => 0.5 - Math.random()).slice(0, 10);
+
+        // Step 5: Return the list of recommendations
+        response.status(200).json({
+            message: "Recommendations retrieved successfully",
+            books: recommendedBooks,
+        });
+        return;
+    } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        response.status(500).json({ message: "Internal server error" });
+    }
+};
 
 export const postBook = async (request: Request, response: Response) => {
     try {

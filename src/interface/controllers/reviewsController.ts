@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import ReviewService from '../../services/ReviewService';
+import Book from '../../entities/Book';
 
 export const getReviewsByBook = async (request: Request, response: Response) => {
     try {
@@ -8,6 +9,12 @@ export const getReviewsByBook = async (request: Request, response: Response) => 
 
         if (!Types.ObjectId.isValid(bookId)) {
             response.status(400).json({ message: 'Invalid book ID' });
+            return;
+        }
+
+        const book = await Book.findById(bookId);
+        if (!book) {
+            response.status(404).json({ message: 'Book not found' });
             return;
         }
 

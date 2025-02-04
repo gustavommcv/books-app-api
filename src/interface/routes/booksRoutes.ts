@@ -1,11 +1,14 @@
 import express from 'express';
-import { deleteBook, getBook, getBooks, postBook, putBook } from '../controllers/booksController';
+import { deleteBook, getBook, getBooks, getRecommendations, postBook, putBook } from '../controllers/booksController';
 import { body, param } from 'express-validator';
 import validateRequest from '../../middlewares/validateRequest';
 import { authMiddleware } from '../../middlewares/authMiddleware';
 import authorizeAdmin from '../../middlewares/authorizeAdmin';
 
 const booksRouter = express.Router();
+
+// GET - Fetch personalized book recommendations for the logged-in user
+booksRouter.get("/recommendations", authMiddleware, getRecommendations);
 
 // GET books with pagination & filters
 booksRouter.get('/', getBooks);
