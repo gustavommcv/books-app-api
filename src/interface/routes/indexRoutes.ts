@@ -3,6 +3,7 @@ import authRouter from './authRoutes';
 import booksRouter from './booksRoutes';
 import commentsRoutes from './commentsRoutes';
 import reviewsRoutes from './reviewsRoutes';
+import userRoutes from './userRoutes';
 
 const indexRouter = express.Router();
 
@@ -25,5 +26,6 @@ indexRouter.use('/auth', authRouter);
 indexRouter.use('/books', booksRouter);
 indexRouter.use('/reviews', reviewsRoutes);
 indexRouter.use('/comments', commentsRoutes);
+indexRouter.use('/user', userRoutes);
 
 export default indexRouter;

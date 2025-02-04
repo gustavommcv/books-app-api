@@ -11,6 +11,9 @@ interface IUser extends Document {
     emailVerificationToken?: string;
     createdAt: Date;
 
+    profilePicture?: string;
+    bio?: string;
+
     reviews?: Types.ObjectId[];
     comments?: Types.ObjectId[];
 }
@@ -49,6 +52,16 @@ const userSchema = new Schema<IUser>({
     createdAt: {
         type: Date,
         default: Date.now,
+    },
+
+    profilePicture: {
+        type: String,
+        default: ""
+    },
+
+    bio: {
+        type: String,
+        maxlength: 100
     },
 
     reviews: [{
