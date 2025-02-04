@@ -3,17 +3,51 @@ import Book from "../../entities/Book";
 
 export const getBooks = async (request: Request, response: Response) => {
     try {
+        // Filtros de pesquisa
+        const { title, author, genre, minPages, maxPages, minDate, maxDate } = request.query;
+
+        // Construindo os filtros
+        const filters: any = {};
+
+        if (title) {
+            filters.title = { $regex: title, $options: "i" }; // Case-insensitive search
+        }
+
+        if (author) {
+            filters.author = { $regex: author, $options: "i" };
+        }
+
+        if (genre) {
+            filters.genre = genre; // Pode ser um gênero específico ou array
+        }
+
+        if (minPages) {
+            filters.pageCount = { ...filters.pageCount, $gte: Number(minPages) };
+        }
+
+        if (maxPages) {
+            filters.pageCount = { ...filters.pageCount, $lte: Number(maxPages) };
+        }
+
+        if (minDate) {
+            filters.publicationDate = { ...filters.publicationDate, $gte: new Date(minDate as string) };
+        }
+
+        if (maxDate) {
+            filters.publicationDate = { ...filters.publicationDate, $lte: new Date(maxDate as string) };
+        }
+
         // Retrieve query params for pagination (default page 1, 10 items per page)
         const page = parseInt(request.query.page as string) || 1;
         const limit = parseInt(request.query.limit as string) || 10;
 
         // Fetch books with pagination
-        const books = await Book.find()
+        const books = await Book.find(filters)
             .skip((page - 1) * limit)
             .limit(limit);
 
         // Count total books for pagination metadata
-        const totalBooks = await Book.countDocuments();
+        const totalBooks = await Book.countDocuments(filters);
 
         // Return books along with pagination details
         response.status(200).json({

@@ -7,6 +7,7 @@ import authorizeAdmin from '../../middlewares/authorizeAdmin';
 
 const booksRouter = express.Router();
 
+// GET books with pagination & filters
 booksRouter.get('/', getBooks);
 
 // GET a book by ID with validation
