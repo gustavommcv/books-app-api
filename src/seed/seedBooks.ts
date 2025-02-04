@@ -5,15 +5,16 @@ import axios from 'axios';
 
 const mapBookData = (apiBooks: any[]) => {
   return apiBooks.map((book) => {
-    const volumeInfo = book.volumeInfo;
     return {
-      title: volumeInfo.title,
-      author: volumeInfo.authors ? volumeInfo.authors[0] : 'Unknown',
-      description: volumeInfo.description || 'No description available.',
-      genre: volumeInfo.categories || ['Unknown'],
-      publicationDate: volumeInfo.publishedDate ? new Date(volumeInfo.publishedDate) : new Date(),
-      pageCount: volumeInfo.pageCount || 0,
-      cover: volumeInfo.imageLinks?.thumbnail || '/images/default_cover.png', // Default cover image if there is no cover
+      title: book.title,
+      author: book.author_name ? book.author_name[0] : 'Unknown',
+      description: book.first_sentence ? book.first_sentence[0] : 'No description available.',
+      genre: book.subject ? book.subject.slice(0, 3) : ['Unknown'], // Pegando até 3 gêneros
+      publicationDate: book.first_publish_year ? new Date(book.first_publish_year.toString()) : new Date(),
+      pageCount: book.number_of_pages_median || 0,
+      cover: book.cover_i 
+        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` 
+        : '/images/default_cover.png', // Default cover if not available
     };
   });
 };
@@ -21,23 +22,32 @@ const mapBookData = (apiBooks: any[]) => {
 const seedBooks = async () => {
   try {
     await mongoose.connect(`${process.env.MONGO_URI}${process.env.DB_NAME}`);
+    console.log('Fetching books from Open Library API...');
 
-    console.log('Fetching books from Google Books API...');
-    const response = await axios.get('https://www.googleapis.com/books/v1/volumes?q=subject:fiction&maxResults=40');
+    const limitPerRequest = 100;
+    const totalBooks = 1000;
+    const totalPages = Math.ceil(totalBooks / limitPerRequest);
+    let allBooks: any[] = [];
 
-    if (response.data.items) {
-      const books = mapBookData(response.data.items);
+    for (let i = 0; i < totalPages; i++) {
+      console.log(`Fetching page ${i + 1} of ${totalPages}...`);
+      const response = await axios.get(
+        `https://openlibrary.org/search.json?q=fiction&limit=${limitPerRequest}&offset=${i * limitPerRequest}`
+      );
 
-      // Deletar dados existentes e inserir novos livros
-      await Book.deleteMany();
-      await Book.insertMany(books);
-
-      console.log('Seed data inserted successfully!');
-      process.exit(0);
-    } else {
-      console.error('No books found from API.');
-      process.exit(1);
+      if (response.data.docs) {
+        allBooks = allBooks.concat(response.data.docs);
+      }
     }
+
+    const books = mapBookData(allBooks);
+
+    // Deletar dados existentes e inserir novos livros
+    await Book.deleteMany();
+    await Book.insertMany(books);
+
+    console.log('Seed data inserted successfully!');
+    process.exit(0);
   } catch (error) {
     console.error('Error inserting seed data:', error);
     process.exit(1);
