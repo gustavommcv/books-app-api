@@ -3,10 +3,10 @@ import Book from "../../entities/Book";
 
 export const getBooks = async (request: Request, response: Response) => {
     try {
-        // Filtros de pesquisa
+        // Search filters
         const { title, author, genre, minPages, maxPages, minDate, maxDate } = request.query;
 
-        // Construindo os filtros
+        // Building filters
         const filters: any = {};
 
         if (title) {
@@ -18,7 +18,7 @@ export const getBooks = async (request: Request, response: Response) => {
         }
 
         if (genre) {
-            filters.genre = genre; // Pode ser um gênero específico ou array
+            filters.genre = genre; // Can be an array of genres
         }
 
         if (minPages) {
