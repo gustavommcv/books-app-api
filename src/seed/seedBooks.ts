@@ -14,7 +14,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1993-01-01'),
         pageCount: 288,
-        cover: '/public/images/The_Witcher_O_Ultimo_Desejo.jpg'
+        cover: '/images/The_Witcher_O_Ultimo_Desejo.jpg'
       },
       {
         title: 'The Witcher: Sword of Destiny',
@@ -23,7 +23,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1992-01-01'),
         pageCount: 400,
-        cover: '/public/images/The_Witcher_A_Espada_do_Destino.jpg'
+        cover: '/images/The_Witcher_A_Espada_do_Destino.jpg'
       },
       {
         title: 'The Witcher: Blood of Elves',
@@ -32,7 +32,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1994-01-01'),
         pageCount: 320,
-        cover: '/public/images/The_Witcher_O_Sangue_dos_Elfos.jpg'
+        cover: '/images/The_Witcher_O_Sangue_dos_Elfos.jpg'
       },
       {
         title: 'The Witcher: Time of Contempt',
@@ -41,7 +41,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1995-01-01'),
         pageCount: 352,
-        cover: '/public/images/The_Witcher_Tempo_do_Desprezo.jpg'
+        cover: '/images/The_Witcher_Tempo_do_Desprezo.jpg'
       },
       {
         title: 'The Witcher: Baptism of Fire',
@@ -50,7 +50,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1996-01-01'),
         pageCount: 378,
-        cover: '/public/images/The_Witcher_Batismo_de_Fogo.jpg'
+        cover: '/images/The_Witcher_Batismo_de_Fogo.jpg'
       },
       {
         title: 'The Witcher: The Tower of the Swallow',
@@ -59,7 +59,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1997-01-01'),
         pageCount: 432,
-        cover: '/public/images/The_Witcher_A_Torre_da_Andorinha.jpg'
+        cover: '/images/The_Witcher_A_Torre_da_Andorinha.jpg'
       },
       {
         title: 'The Witcher: The Lady of the Lake',
@@ -68,7 +68,7 @@ const seedBooks = async () => {
         genre: ['Fantasy', 'Adventure'],
         publicationDate: new Date('1999-01-01'),
         pageCount: 544,
-        cover: '/public/images/The_Witcher_A_Senhora_do_Lago.jpg'
+        cover: '/images/The_Witcher_A_Senhora_do_Lago.jpg'
       }
     ];
 

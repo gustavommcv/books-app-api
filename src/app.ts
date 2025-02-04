@@ -17,7 +17,7 @@ connectDB();
 ///////////////////////////////////////////////////////////////////////////////////
 // Middlewares
 ///////////////////////////////////////////////////////////////////////////////////
-app.use('/public', express.static('public')); // Middleware to serve static files (Like the book covers)
+app.use(express.static('public')); // Middleware to serve static files (Like the book covers)
 app.use(express.json()); // Middleware to parse incoming requests with JSON payloads
 app.use(cookieParser()); // Middleware to parse incoming request with cookies
 
