@@ -4,7 +4,7 @@ import Book from "../../entities/Book";
 export const getBooks = async (request: Request, response: Response) => {
     try {
         // Search filters
-        const { title, author, genre, minPages, maxPages, minDate, maxDate } = request.query;
+        const { title, author, genre, minPages, maxPages, minDate, maxDate, sort, order } = request.query;
 
         // Building filters
         const filters: any = {};
@@ -41,8 +41,12 @@ export const getBooks = async (request: Request, response: Response) => {
         const page = parseInt(request.query.page as string) || 1;
         const limit = parseInt(request.query.limit as string) || 10;
 
+        const sortField = (sort as string) || "title"; // Sorts by title by default
+        const sortOrder = order === "desc" ? -1 : 1;   // Descending order if specified "desc", if not ascending
+
         // Fetch books with pagination
         const books = await Book.find(filters)
+            .sort({ [sortField]: sortOrder }) // Applying Ordering
             .skip((page - 1) * limit)
             .limit(limit);
 
