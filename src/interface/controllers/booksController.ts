@@ -5,7 +5,20 @@ import { Types } from "mongoose";
 
 export const getBooks = async (request: Request, response: Response) => {
     try {
-        // Search filters
+        const { random, limit = 10 } = request.query;
+
+        if (random === "true") {
+            const sampleSize = Math.min(parseInt(limit as string) || 10, 100);
+
+            const books = await Book.aggregate([{ $sample: { size: sampleSize } }]);
+
+            response.status(200).json({
+                message: "Random books retrieved successfully",
+                books,
+            });
+            return;
+        }
+
         const { title, author, genre, minPages, maxPages, minDate, maxDate, sort, order } = request.query;
 
         // Building filters
@@ -20,7 +33,7 @@ export const getBooks = async (request: Request, response: Response) => {
         }
 
         if (genre) {
-            filters.genre = genre; // Can be an array of genres
+            filters.genre = genre;
         }
 
         if (minPages) {
@@ -39,28 +52,23 @@ export const getBooks = async (request: Request, response: Response) => {
             filters.publicationDate = { ...filters.publicationDate, $lte: new Date(maxDate as string) };
         }
 
-        // Retrieve query params for pagination (default page 1, 10 items per page)
         const page = parseInt(request.query.page as string) || 1;
-        const limit = parseInt(request.query.limit as string) || 10;
+        const itemsPerPage = parseInt(request.query.limit as string) || 10;
+        const sortField = (sort as string) || "title";
+        const sortOrder = order === "desc" ? -1 : 1;
 
-        const sortField = (sort as string) || "title"; // Sorts by title by default
-        const sortOrder = order === "desc" ? -1 : 1;   // Descending order if specified "desc", if not ascending
-
-        // Fetch books with pagination
         const books = await Book.find(filters)
-            .sort({ [sortField]: sortOrder }) // Applying Ordering
-            .skip((page - 1) * limit)
-            .limit(limit);
+            .sort({ [sortField]: sortOrder })
+            .skip((page - 1) * itemsPerPage)
+            .limit(itemsPerPage);
 
-        // Count total books for pagination metadata
         const totalBooks = await Book.countDocuments(filters);
 
-        // Return books along with pagination details
         response.status(200).json({
             message: "Books retrieved successfully",
             pagination: {
                 currentPage: page,
-                totalPages: Math.ceil(totalBooks / limit),
+                totalPages: Math.ceil(totalBooks / itemsPerPage),
                 totalBooks,
             },
             books,

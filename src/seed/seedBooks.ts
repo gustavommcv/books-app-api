@@ -17,7 +17,7 @@ const mapBookData = (apiBooks: any[]) => {
         genre: volumeInfo.categories || ['Unknown'],
         publicationDate: volumeInfo.publishedDate ? new Date(volumeInfo.publishedDate) : new Date(),
         pageCount: volumeInfo.pageCount || 0,
-        cover: volumeInfo.imageLinks?.thumbnail || '/images/default_cover.png',
+        cover: volumeInfo.imageLinks?.thumbnail || `${process.env.API_URL}/images/default_cover.png`,
       };
     });
 };
