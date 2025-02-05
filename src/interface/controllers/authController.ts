@@ -266,7 +266,12 @@ export const verifyEmail = async (request: Request, response: Response): Promise
     const token = request.query.token as string;
 
     if (!token) {
-        response.status(400).json({ message: 'Token is missing or invalid' });
+        response.status(400).send(`
+            <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1 style="color: #333;">Invalid Request</h1>
+                <p style="font-size: 18px; color: #555;">The token is missing or invalid. Please check your verification link.</p>
+            </div>
+        `);
         return;
     }
 
@@ -275,7 +280,12 @@ export const verifyEmail = async (request: Request, response: Response): Promise
         const user = await User.findOne({ emailVerificationToken: token });
 
         if (!user) {
-            response.status(400).json({ message: 'Invalid token or user not found' });
+            response.status(400).send(`
+                <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                    <h1 style="color: #333;">Verification Failed</h1>
+                    <p style="font-size: 18px; color: #555;">Invalid token or user not found.</p>
+                </div>
+            `);
             return;
         }
 
@@ -284,9 +294,30 @@ export const verifyEmail = async (request: Request, response: Response): Promise
         user.emailVerificationToken = undefined; // Clear the token after validation
         await user.save();
 
-        response.status(200).json({ message: `Email ${user.email} successfully verified` });
+        // Return a success page
+        response.status(200).send(`
+            <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1 style="color: #333;">Email Verified Successfully!</h1>
+                <p style="font-size: 18px; color: #555;">Your email (${user.email}) has been verified. You can now enjoy all the features of <strong>BooksApp</strong>.</p>
+                <a href="http://localhost:5173" style="
+                    background-color: #333;
+                    color: white;
+                    padding: 12px 25px;
+                    font-size: 18px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    display: inline-block;
+                    margin-top: 20px;
+                ">Go to Homepage</a>
+            </div>
+        `);
     } catch (error) {
         console.error(error);
-        response.status(500).json({ message: 'Internal server error' });
+        response.status(500).send(`
+            <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1 style="color: #333;">Internal Server Error</h1>
+                <p style="font-size: 18px; color: #555;">Something went wrong while verifying your email. Please try again later.</p>
+            </div>
+        `);
     }
-}
+};
