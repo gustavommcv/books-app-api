@@ -109,25 +109,29 @@ export const getBook = async (request: Request, response: Response) => {
 export const getRecommendations = async (request: Request, response: Response) => {
     try {
         const userId = request.user?.id;
+        const limit = parseInt(request.query.limit as string) || 10; // Default limit is 10
+
+        // Validate the user ID
         if (!userId || !Types.ObjectId.isValid(userId)) {
             response.status(400).json({ message: "Invalid user ID" });
             return;
         }
 
-        // Step 1: Get reviews with ratings >= 4 by this user
-        const positiveReviews = await Review.find({ userId, rating: { $gte: 4 } }).populate("bookId");
+        // Step 1: Fetch positive reviews (rating >= 4) from the user
+        const positiveReviews = await Review.find({ userId, rating: { $gte: 4 } }).populate('bookId');
 
-        // Step 2: Extract genres from the books reviewed positively
-        const genreMap: { [key: string]: number } = {}; // Mapeamento de gêneros com frequência
+        // Step 2: Build a weighted genre map based on user reviews
+        const genreMap: { [key: string]: number } = {}; // Keeps track of genres and their frequencies
         for (const review of positiveReviews) {
             const book = review.bookId as any; // Type assertion for Book schema
             if (book?.genre) {
                 book.genre.forEach((g: string) => {
-                    genreMap[g] = (genreMap[g] || 0) + 1; // Incrementa o contador de cada gênero
+                    genreMap[g] = (genreMap[g] || 0) + 1; // Increment the count of each genre
                 });
             }
         }
 
+        // If no genres are found, return a message to the user
         const genres = Object.keys(genreMap);
         if (genres.length === 0) {
             response.status(200).json({
@@ -137,29 +141,48 @@ export const getRecommendations = async (request: Request, response: Response) =
             return;
         }
 
-        // Step 3: Fetch recommendations diversifying across genres
+        // Step 3: Sort genres by frequency to prioritize them
+        genres.sort((a, b) => genreMap[b] - genreMap[a]); // Higher frequency first
+
+        // Step 4: Fetch books across prioritized genres
         let recommendedBooks: any[] = [];
-        const booksPerGenre = Math.ceil(10 / genres.length);
 
         for (const genre of genres) {
             const books = await Book.find({
                 genre: genre,
-                _id: { $nin: positiveReviews.map((review) => review.bookId) }, // Exclude books the user has reviewed
+                _id: { $nin: positiveReviews.map((review) => review.bookId) }, // Exclude books already reviewed
             })
-                .limit(booksPerGenre)
+                .limit(limit - recommendedBooks.length) // Dynamically limit based on remaining books needed
                 .exec();
+
             recommendedBooks = recommendedBooks.concat(books);
+            if (recommendedBooks.length >= limit) break; // Stop if limit is reached
         }
 
-        // Step 4: Shuffle the recommendations for randomness
-        recommendedBooks = recommendedBooks.sort(() => 0.5 - Math.random()).slice(0, 10);
+        // Step 5: If still under the limit, retry fetching from the most frequent genres
+        if (recommendedBooks.length < limit) {
+            for (const genre of genres) {
+                if (recommendedBooks.length >= limit) break;
 
-        // Step 5: Return the list of recommendations
+                const additionalBooks = await Book.find({
+                    genre: genre,
+                    _id: {
+                        $nin: positiveReviews.map((review) => review.bookId)
+                            .concat(recommendedBooks.map((book) => book._id)),
+                    }, // Exclude books already fetched
+                })
+                    .limit(limit - recommendedBooks.length) // Fetch only the remaining needed books
+                    .exec();
+
+                recommendedBooks = recommendedBooks.concat(additionalBooks);
+            }
+        }
+
+        // Step 6: Return the list of recommendations
         response.status(200).json({
             message: "Recommendations retrieved successfully",
-            books: recommendedBooks,
+            books: recommendedBooks.slice(0, limit), // Ensure we return exactly the limit
         });
-        return;
     } catch (error) {
         console.error("Error fetching recommendations:", error);
         response.status(500).json({ message: "Internal server error" });

@@ -93,6 +93,12 @@ export const postReview = async (request: Request, response: Response) => {
             return;
         }
 
+        const book = await Book.findById(bookId);
+        if (!book) {
+            response.status(404).json({ message: 'Book not Found' });
+            return;
+        }
+
         if (!userId || !Types.ObjectId.isValid(userId)) {
             response.status(400).json({ message: 'Invalid user ID' });
             return;
