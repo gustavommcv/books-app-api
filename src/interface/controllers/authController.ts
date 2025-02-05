@@ -65,6 +65,21 @@ const sendVerificationEmail = async (email: string, token: string) => {
     }
 };
 
+export const getStatus = async (request: Request, response: Response): Promise<void> => {
+    const token = request.cookies.authToken;
+    if (!token) {
+        response.status(401).json({ message: 'Not authenticated' });
+        return;
+    }
+
+    try {
+        jwt.verify(token, JWT_SECRET);
+        response.status(200).json({ message: 'Authenticaded' });
+    } catch (error) {
+        response.status(401).json({ message: 'Invalid Token' });
+    }
+}
+
 // Define the postLogin controller function
 export const postLogin = async (request: Request, response: Response): Promise<void> => {
     // Verifies if there is a JWT valid on cookie
