@@ -6,18 +6,20 @@ import axios from 'axios';
 const genres = ['fiction', 'nonfiction', 'fantasy', 'romance', 'science', 'history', 'mystery', 'thriller', 'biography'];
 
 const mapBookData = (apiBooks: any[]) => {
-  return apiBooks.map((book) => {
-    const volumeInfo = book.volumeInfo;
-    return {
-      title: volumeInfo.title || 'Unknown Title',
-      author: volumeInfo.authors ? volumeInfo.authors[0] : 'Unknown',
-      description: volumeInfo.description || 'No description available.',
-      genre: volumeInfo.categories || ['Unknown'],
-      publicationDate: volumeInfo.publishedDate ? new Date(volumeInfo.publishedDate) : new Date(),
-      pageCount: volumeInfo.pageCount || 0,
-      cover: volumeInfo.imageLinks?.thumbnail || '/images/default_cover.png',
-    };
-  });
+  return apiBooks
+    .filter((book) => book.volumeInfo?.title)
+    .map((book) => {
+      const volumeInfo = book.volumeInfo;
+      return {
+        title: volumeInfo.title || 'Unknown Title',
+        author: volumeInfo.authors ? volumeInfo.authors[0] : 'Unknown',
+        description: volumeInfo.description || 'No description available.',
+        genre: volumeInfo.categories || ['Unknown'],
+        publicationDate: volumeInfo.publishedDate ? new Date(volumeInfo.publishedDate) : new Date(),
+        pageCount: volumeInfo.pageCount || 0,
+        cover: volumeInfo.imageLinks?.thumbnail || '/images/default_cover.png',
+      };
+    });
 };
 
 const seedBooks = async () => {
@@ -26,28 +28,34 @@ const seedBooks = async () => {
     console.log('Fetching books from Google Books API...');
 
     let allBooks: any[] = [];
+    const seenTitles = new Set();
     const limitPerRequest = 40;
 
     for (const genre of genres) {
-      for (let i = 0; i < 5; i++) { // 5 pages per genre
+      for (let i = 0; i < 5; i++) {
         console.log(`Fetching books from genre ${genre}, page ${i + 1}...`);
         const response = await axios.get(
           `https://www.googleapis.com/books/v1/volumes?q=subject:${genre}&maxResults=${limitPerRequest}&startIndex=${i * limitPerRequest}`
         );
 
         if (response.data.items) {
-          allBooks = allBooks.concat(response.data.items);
+          const filteredBooks = mapBookData(response.data.items);
+          filteredBooks.forEach((book) => {
+            if (!seenTitles.has(book.title)) {
+              seenTitles.add(book.title);
+              allBooks.push(book);
+            }
+          });
         }
       }
     }
 
-    const books = mapBookData(allBooks);
+    console.log(`Total unique books collected: ${allBooks.length}`);
 
-    // Deletar dados existentes e inserir novos livros
     await Book.deleteMany();
-    await Book.insertMany(books);
+    await Book.insertMany(allBooks);
 
-    console.log(`Seeded ${books.length} books successfully!`);
+    console.log(`Successfully seeded ${allBooks.length} unique books!`);
     process.exit(0);
   } catch (error) {
     console.error('Error inserting seed data:', error);
