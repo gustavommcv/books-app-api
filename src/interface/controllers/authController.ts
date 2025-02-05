@@ -40,22 +40,36 @@ const sendVerificationEmail = async (email: string, token: string) => {
         to: email,
         subject: 'Verify Your Email - BooksApp',
         html: `
-            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
-                <h2 style="color: #4CAF50;">Welcome to BooksApp!</h2>
-                <p>Hello,</p>
-                <p>Thank you for signing up with <strong>BooksApp</strong>. Please verify your email address by clicking the button below:</p>
-                
-                <div style="text-align: center; margin: 20px;">
-                    <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">Verify My Email</a>
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #333; font-size: 24px;">Welcome to BooksApp!</h2>
+                <p style="font-size: 16px; line-height: 1.5; color: #555;">
+                    Thank you for signing up with <strong>BooksApp</strong>. We're excited to have you on board! Please verify your email address by clicking the button below.
+                </p>
+    
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${verificationLink}" 
+                       style="
+                       background-color: #333; 
+                       color: white; 
+                       padding: 12px 25px; 
+                       font-size: 18px; 
+                       text-decoration: none; 
+                       border-radius: 5px; 
+                       display: inline-block;">
+                       Verify My Email
+                    </a>
                 </div>
-
-                <p>If you did not create this account, please ignore this email.</p>
-                <p>Thank you,</p>
-                <p>The <strong>BooksApp</strong> Team</p>
+    
+                <p style="font-size: 14px; color: #777;">
+                    If you did not create this account, please ignore this email. This verification link will expire after 24 hours.
+                </p>
+                
+                <p style="font-size: 16px; color: #555;">Thank you,</p>
+                <p style="font-size: 16px; color: #555;"><strong>The BooksApp Team</strong></p>
             </div>
         `
     };
-
+    
     try {
         await transporter.sendMail(mailOptions);
         console.log('Verification email sent successfully to:', email);
