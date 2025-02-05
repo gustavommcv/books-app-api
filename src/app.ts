@@ -26,7 +26,7 @@ app.use(cookieParser()); // Middleware to parse incoming request with cookies
 ///////////////////////////////////////////////////////////////////////////////////
 app.use(cors({
     // Allow requests from any origin (for development purposes)
-    origin: '*',
+    origin: 'http://localhost:5173',
     credentials: true
 }));
 
