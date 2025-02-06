@@ -299,7 +299,7 @@ export const verifyEmail = async (request: Request, response: Response): Promise
             <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
                 <h1 style="color: #333;">Email Verified Successfully!</h1>
                 <p style="font-size: 18px; color: #555;">Your email (${user.email}) has been verified. You can now enjoy all the features of <strong>BooksApp</strong>.</p>
-                <a href="http://localhost:5173" style="
+                <a href="${process.env.CLIENT_URL}" style="
                     background-color: #333;
                     color: white;
                     padding: 12px 25px;
