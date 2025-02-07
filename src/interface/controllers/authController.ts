@@ -154,7 +154,7 @@ export const postLogin = async (request: Request, response: Response): Promise<v
         response.cookie('authToken', token, {
             httpOnly: true,
             secure: true,
-            sameSite: 'lax',
+            sameSite: 'none',
             maxAge: 1 * 24 * 60 * 60 * 1000 // 1 day
         });
 
