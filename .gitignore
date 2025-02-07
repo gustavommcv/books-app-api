@@ -1,6 +1,8 @@
 node_modules
 dist
 
+public/uploads
+
 .env
 cert.pem
 key.pem
