@@ -30,34 +30,36 @@ export const getLoggedUserProfile = async (request: Request, response: Response)
 export const updateProfile = async (request: Request, response: Response) => {
     try {
         const userId = request.user?.id;
-        const { bio } = request.body;
+        const { userName, bio } = request.body; 
         const newProfilePicture = request.file?.path;
 
         if (!userId || !Types.ObjectId.isValid(userId)) {
-            response.status(400).json({ message: "Invalid user ID" });
-            return;
+            return response.status(400).json({ message: "Invalid user ID" });
         }
 
-        let relativePath = newProfilePicture
-            ? `/uploads/profile-pictures/${path.basename(newProfilePicture)}`
-            : undefined;
+        const updateData: { [key: string]: any } = {};
 
-        // Update the user profile with the new data
-        const updatedUser = await UserService.updateProfile(new Types.ObjectId(userId), {
-            bio,
-            profilePicture: relativePath,
-        });
+        if (userName) updateData.userName = userName;
+        if (bio) updateData.bio = bio;
+        if (newProfilePicture) {
+            updateData.profilePicture = `/uploads/profile-pictures/${path.basename(newProfilePicture)}`;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return response.status(400).json({ message: "No data provided for update" });
+        }
+
+        const updatedUser = await UserService.updateProfile(new Types.ObjectId(userId), updateData);
 
         if (!updatedUser) {
-            response.status(500).json({ message: "Profile update failed" });
-            return;
+            return response.status(500).json({ message: "Profile update failed" });
         }
 
         response.status(200).json({
             message: "Profile updated successfully",
             user: {
                 ...updatedUser.toObject(),
-                profilePicture: relativePath || updatedUser.profilePicture,
+                profilePicture: updateData.profilePicture || updatedUser.profilePicture,
             },
         });
     } catch (error) {
@@ -65,6 +67,7 @@ export const updateProfile = async (request: Request, response: Response) => {
         response.status(500).json({ message: "Internal server error" });
     }
 };
+
 
 export const getUserProfile = async (request: Request, response: Response) => {
     try {
