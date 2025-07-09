@@ -144,9 +144,3 @@ BooksApp is a book management application that allows users to browse a catalog,
 - ✅ Improve the recommendation algorithm with more advanced logic.  
 - ✅ Implement caching for frequent API requests.  
 - ✅ Implement HATEOAS 
-
----
-
-## 👤 Author
-- **Developed by [Gustavo Monnerat da Costa Veronese]([https://your-portfolio-link.com](https://github.com/gustavommcv))**  
-- 📧 **Contact me at:** monnerat.gustavo@outlook.com  
